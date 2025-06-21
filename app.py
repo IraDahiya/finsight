@@ -15,24 +15,30 @@ if option == "Credit Risk Prediction":
 
     if file:
         try:
-            # Load uploaded CSV, skip extra header row if exists
-            df = pd.read_csv(file, skiprows=1)
+            # Load uploaded data
+            df = pd.read_csv(file)
 
-            # Drop 'Unnamed: 0' if present
-            if 'Unnamed: 0' in df.columns:
-                df = df.drop(columns=['Unnamed: 0'])
+            # Define expected feature columns in correct order
+            expected_columns = ['LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE', 'PAY_0', 'PAY_2', 
+                                'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6', 'BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 
+                                'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6', 'PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 
+                                'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6']
+
+            # If columns don’t match expected, rename accordingly (assuming same order)
+            if list(df.columns) != expected_columns:
+                df.columns = expected_columns
 
             st.write("Uploaded Data Preview:")
             st.dataframe(df.head())
 
-            # Load retrained model and scaler
+            # Load model and scaler
             model = joblib.load("models/credit_model.pkl")
             scaler = joblib.load("models/scaler.pkl")
 
             # Scale features
-            df_scaled = pd.DataFrame(scaler.transform(df), columns=df.columns)
+            df_scaled = pd.DataFrame(scaler.transform(df), columns=expected_columns)
 
-            # Predict using the model
+            # Predict
             predictions = model.predict(df_scaled)
             df['Prediction'] = predictions
 
@@ -50,6 +56,7 @@ if option == "Credit Risk Prediction":
                 file_name="predictions.csv",
                 mime="text/csv"
             )
+
         except Exception as e:
             st.error(f"Error processing the file: {e}")
 

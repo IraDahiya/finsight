@@ -1,43 +1,45 @@
 import pandas as pd
-import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+import joblib
 
-# Load data, skipping extra header row if present
-df = pd.read_csv("data/credit_data.csv", skiprows=1)
+# Load data from local CSV file in the current folder
+df = pd.read_csv('credit_data.csv', skiprows=1)  # skiprows=1 if CSV has extra header row
 
-# Drop unwanted columns if they exist
-for col in ['Unnamed: 0', 'ID']:
-    if col in df.columns:
-        df = df.drop(columns=[col])
+# Drop unwanted columns if present
+if 'Unnamed: 0' in df.columns:
+    df = df.drop(columns=['Unnamed: 0'])
 
-# Separate target column 'default payment next month' (adjust if named differently)
-target_col = 'default payment next month'
+# Define feature columns expected by your model
+feature_cols = [
+    'LIMIT_BAL', 'SEX', 'EDUCATION', 'MARRIAGE', 'AGE',
+    'PAY_0', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6',
+    'BILL_AMT1', 'BILL_AMT2', 'BILL_AMT3', 'BILL_AMT4', 'BILL_AMT5', 'BILL_AMT6',
+    'PAY_AMT1', 'PAY_AMT2', 'PAY_AMT3', 'PAY_AMT4', 'PAY_AMT5', 'PAY_AMT6'
+]
 
-if target_col not in df.columns:
-    raise ValueError(f"Target column '{target_col}' not found in data")
+# Target column
+target_col = 'default payment next month'  # Adjust if your CSV has a different name
 
-X = df.drop(columns=[target_col])
-y = df[target_col].astype(int)
+# Select features and target
+X = df[feature_cols]
+y = df[target_col]
 
-# Train/test split
+# Split data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Scale features
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-# Train logistic regression model
+# Train model (using Logistic Regression here, but you can change)
 model = LogisticRegression(max_iter=1000)
 model.fit(X_train_scaled, y_train)
 
-# Save model and scaler
-joblib.dump(model, "models/credit_model.pkl")
-joblib.dump(scaler, "models/scaler.pkl")
-
-# Save feature names for prediction phase
-feature_names = list(X_train.columns)
-joblib.dump(feature_names, "models/feature_names.pkl")
+# Save the model and scaler
+joblib.dump(model, 'models/credit_model.pkl')
+joblib.dump(scaler, 'models/scaler.pkl')
 
 print("Model training complete and saved!")
